@@ -5,6 +5,7 @@ import Ecosystem from './components/Ecosystem';
 import Features from './components/Features';
 import PainPoints from './components/PainPoints';
 import Comparison from './components/Comparison';
+import ThreeDShowcase from './components/ThreeDShowcase';
 import Waitlist from './components/Waitlist';
 import Footer from './components/Footer';
 import { UserType } from './types';
@@ -22,6 +23,7 @@ const App: React.FC = () => {
         <Ecosystem />
         <Comparison activeView={activeView} />
         <Features activeView={activeView} setActiveView={setActiveView} />
+        <ThreeDShowcase activeView={activeView} />
         <Waitlist activeView={activeView} />
       </main>
 

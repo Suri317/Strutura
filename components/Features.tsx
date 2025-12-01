@@ -12,7 +12,10 @@ import {
   Smartphone, 
   Wallet,
   MoreHorizontal,
-  Paperclip
+  Box,
+  Map,
+  Layers,
+  Maximize2
 } from 'lucide-react';
 
 interface FeaturesProps {
@@ -49,6 +52,12 @@ const Features: React.FC<FeaturesProps> = ({ activeView, setActiveView }) => {
         description: "Upload your BOQ. We auto-generate a timeline and material schedule instantly.",
         icon: CalendarClock,
         benefits: ["Instant scheduling", "Delay forecasting", "Material alerts"]
+      },
+      {
+        title: "3D Site Twin",
+        description: "Show clients a 3D view of the map and structure. Let them visualize progress on a digital twin.",
+        icon: Box,
+        benefits: ["Immersive Pitching", "Map Context", "Reduce Misunderstandings"]
       }
     ],
     [UserType.HOMEOWNER]: [
@@ -75,6 +84,12 @@ const Features: React.FC<FeaturesProps> = ({ activeView, setActiveView }) => {
         description: "Chat, quotes, invoices, and blueprints all in one place. No more lost emails.",
         icon: MessageSquare,
         benefits: ["Centralized docs", "Clear audit trail", "Professional management"]
+      },
+      {
+        title: "3D Walkthrough",
+        description: "Explore your future home in 3D. See exactly how it sits on the map and walk through rooms.",
+        icon: Box,
+        benefits: ["Interactive Preview", "Map Integration", "Visual Clarity"]
       }
     ]
   };
@@ -95,7 +110,7 @@ const Features: React.FC<FeaturesProps> = ({ activeView, setActiveView }) => {
         className="w-full h-full bg-white rounded-xl border border-slate-200 p-6 flex flex-col relative overflow-hidden shadow-sm"
       >
         {/* Mock Header */}
-        <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100 relative z-10">
            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded bg-brand-50 flex items-center justify-center">
                  <activeFeature.icon className="w-4 h-4 text-brand-600" />
@@ -106,7 +121,7 @@ const Features: React.FC<FeaturesProps> = ({ activeView, setActiveView }) => {
         </div>
 
         {/* Dynamic Content based on feature index (Demo visual) */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative z-10">
            {/* Abstract representations of UI */}
            {hoveredIndex === 0 && ( // Logs / Photos
              <div className="space-y-4">
@@ -199,6 +214,57 @@ const Features: React.FC<FeaturesProps> = ({ activeView, setActiveView }) => {
                     </div>
                  </div>
              </div>
+           )}
+
+           {hoveredIndex === 4 && ( // 3D Map / Model
+              <div className="absolute inset-0 bg-slate-900 flex items-center justify-center overflow-hidden">
+                 {/* 3D Grid Floor Effect */}
+                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px] [transform:perspective(500px)_rotateX(60deg)_translateY(-100px)_scale(2)] opacity-30 origin-top"></div>
+                 
+                 {/* Floating UI Controls */}
+                 <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+                    <div className="bg-slate-800/80 backdrop-blur text-white text-[10px] p-2 rounded border border-slate-700 flex items-center gap-2">
+                       <Map className="w-3 h-3 text-brand-400" /> Map View
+                    </div>
+                    <div className="bg-slate-800/80 backdrop-blur text-white text-[10px] p-2 rounded border border-slate-700 flex items-center gap-2">
+                       <Layers className="w-3 h-3 text-blue-400" /> Structure
+                    </div>
+                 </div>
+
+                 <div className="absolute top-4 right-4 z-20">
+                    <div className="bg-slate-800/80 backdrop-blur p-2 rounded border border-slate-700 hover:bg-slate-700 cursor-pointer">
+                       <Maximize2 className="w-4 h-4 text-slate-300" />
+                    </div>
+                 </div>
+
+                 {/* Rotating 3D Object Simulation */}
+                 <motion.div
+                    animate={{ rotateY: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="relative w-40 h-40 transform-style-3d preserve-3d"
+                    style={{ transformStyle: 'preserve-3d' }}
+                 >
+                    {/* Cube Faces simulation */}
+                    <div className="absolute inset-0 border-2 border-brand-500/50 bg-brand-500/10 backdrop-blur-sm [transform:translateZ(80px)] shadow-[0_0_30px_rgba(16,185,129,0.2)] flex items-center justify-center">
+                       <span className="text-brand-400 font-mono text-xs">Front Elevation</span>
+                    </div>
+                    <div className="absolute inset-0 border-2 border-brand-500/30 bg-brand-500/5 [transform:rotateY(180deg)_translateZ(80px)]"></div>
+                    <div className="absolute inset-0 border-2 border-brand-500/30 bg-brand-500/5 [transform:rotateY(90deg)_translateZ(80px)]"></div>
+                    <div className="absolute inset-0 border-2 border-brand-500/30 bg-brand-500/5 [transform:rotateY(-90deg)_translateZ(80px)]"></div>
+                    <div className="absolute inset-0 border-2 border-brand-500/30 bg-brand-500/5 [transform:rotateX(90deg)_translateZ(80px)]"></div>
+                    <div className="absolute inset-0 border-2 border-brand-500/30 bg-brand-500/5 [transform:rotateX(-90deg)_translateZ(80px)] shadow-[0_0_50px_rgba(16,185,129,0.3)]"></div>
+                 </motion.div>
+                 
+                 {/* Map Pins */}
+                 <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute bottom-1/4 left-1/4 z-10"
+                 >
+                    <div className="bg-brand-500 w-2 h-2 rounded-full shadow-[0_0_10px_#10b981]"></div>
+                    <div className="bg-brand-500/20 w-8 h-8 rounded-full absolute -top-3 -left-3 animate-ping"></div>
+                 </motion.div>
+              </div>
            )}
         </div>
       </motion.div>
