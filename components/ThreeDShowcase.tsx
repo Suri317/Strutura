@@ -1,150 +1,305 @@
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { Layers, Map, Box, MousePointer2, Scan, Compass } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, useSpring, useTransform, useMotionValue } from 'framer-motion';
 import { UserType } from '../types';
+import { Layers, FileText, Hammer, Zap, Home, ChevronRight, ScanLine, Box } from 'lucide-react';
 
 interface ThreeDShowcaseProps {
   activeView: UserType;
 }
 
 const ThreeDShowcase: React.FC<ThreeDShowcaseProps> = ({ activeView }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"]
-  });
+  const [expansion, setExpansion] = useState(0.5); // 0 to 1
+  const [activeLayer, setActiveLayer] = useState<number>(3); // 0 to 3
 
-  const rotateX = useTransform(scrollYProgress, [0, 0.5, 1], [20, 45, 60]);
-  const scale = useTransform(scrollYProgress, [0, 0.5], [0.8, 1]);
-  const layerSpacing = useTransform(scrollYProgress, [0.2, 0.6], [0, 80]); // Explodes layers apart
+  // Spring animation for smooth expansion
+  const springExpansion = useSpring(expansion, { damping: 20, stiffness: 100 });
 
-  const isHomeowner = activeView === UserType.HOMEOWNER;
-
-  const content = isHomeowner ? {
-    badge: "Immersive Walkthroughs",
-    title: "Don't Guess.",
-    highlight: "Experience It.",
-    desc: "2D plans are confusing. Walk through your future home on a digital twin before a single brick is laid. See sunlight, views, and finishes in real-time.",
-    features: [
-      { icon: Compass, label: "Sun Path Analysis" },
-      { icon: Box, label: "1:1 Scale Walkthrough" },
-      { icon: Map, label: "Contextual Map View" }
-    ]
-  } : {
-    badge: "3D Site Command",
-    title: "Win The Bid.",
-    highlight: "Show The Vision.",
-    desc: "Impress clients by placing their dream project directly onto the site map. Detect clashes, plan logistics, and show progress on a live 3D model.",
-    features: [
-      { icon: Scan, label: "Clash Detection" },
-      { icon: Layers, label: "Structural Exploded View" },
-      { icon: Map, label: "Logistics Planning" }
-    ]
+  // Handle slider change
+  const handleSlide = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setExpansion(val);
+    
+    // Determine active layer based on expansion
+    if (val < 0.2) setActiveLayer(3); // Top
+    else if (val < 0.5) setActiveLayer(2);
+    else if (val < 0.8) setActiveLayer(1);
+    else setActiveLayer(0); // Bottom
   };
 
+  const layers = [
+    {
+      id: "finish",
+      title: "The Vision",
+      subtitle: "Final Finishes & Snagging",
+      icon: Home,
+      color: "bg-brand-500",
+      image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=1000&auto=format&fit=crop",
+      data: activeView === UserType.HOMEOWNER 
+        ? ["Paint Finish: Premium Emulsion", "Flooring: Italian Marble", "Snag List: 0 Pending"]
+        : ["Client Handover Signed", "Final Bill Cleared", "Retention Amount Released"]
+    },
+    {
+      id: "systems",
+      title: "The Nervous System",
+      subtitle: "MEP (Mechanical, Electrical, Plumbing)",
+      icon: Zap,
+      color: "bg-yellow-500",
+      // Abstract texture for wires/pipes
+      texture: "radial-gradient(circle, transparent 20%, #0f172a 20%, #0f172a 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #0f172a 20%, #0f172a 80%, transparent 80%, transparent) 50px 50px, linear-gradient(#A8A29E 2px, transparent 2px) 0 -1px, linear-gradient(90deg, #A8A29E 2px, #0f172a 2px) -1px 0",
+      data: activeView === UserType.HOMEOWNER
+        ? ["Wiring: Fire Retardant", "Piping Check: Leak Proof", "HVAC: Ducts Sealed"]
+        : ["Conduit Layout Verified", "Pressure Test: Passed", "Material Reconciliation"]
+    },
+    {
+      id: "structure",
+      title: "The Skeleton",
+      subtitle: "Civil Structure & Brickwork",
+      icon: Hammer,
+      color: "bg-blue-500",
+      image: "https://images.unsplash.com/photo-1647800762953-e982187600f6?q=80&w=1000&auto=format&fit=crop", // Concrete texture
+      data: activeView === UserType.HOMEOWNER
+        ? ["Concrete Grade: M25", "Curing Days: 14/14", "Wall Plumb: Vertical"]
+        : ["Steel Reinforcement: Verified", "Shuttering Quality: A+", "Daily Labour: 12"]
+    },
+    {
+      id: "plan",
+      title: "The Blueprint",
+      subtitle: "Costing & Planning",
+      icon: FileText,
+      color: "bg-indigo-500",
+      // Blueprint grid pattern
+      texture: "linear-gradient(rgba(59,130,246,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.1) 1px, transparent 1px)",
+      data: activeView === UserType.HOMEOWNER
+        ? ["Budget Locked: $120k", "Timeline: 6 Months", "Floor Area: 2400 sqft"]
+        : ["BOQ Quantities Uploaded", "Rate Analysis: Done", "Vendor list: 15 Active"]
+    }
+  ];
+
   return (
-    <section ref={containerRef} className="bg-slate-900 py-32 relative overflow-hidden text-white perspective-1000">
-      {/* Background Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px] opacity-20"></div>
-      
-      {/* Ambient Glow */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/20 rounded-full blur-[128px] pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[128px] pointer-events-none"></div>
+    <section className="bg-slate-900 py-32 relative overflow-hidden min-h-[900px] flex items-center">
+      {/* Ambient Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#1e293b_0%,#020617_100%)]"></div>
+      <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none" 
+           style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-20">
+      <div className="max-w-7xl mx-auto px-6 w-full relative z-10 grid lg:grid-cols-2 gap-16 items-center">
+        
+        {/* LEFT: The Isometric Stack */}
+        <div className="relative h-[600px] flex items-center justify-center perspective-[2000px] group">
           
-          {/* Text Side */}
-          <div className="flex-1 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-400 text-xs font-bold uppercase tracking-wider mb-6">
-              <Box className="w-3 h-3" />
-              {content.badge}
-            </div>
-            <h2 className="text-5xl md:text-6xl font-display font-bold mb-6 leading-tight">
-              {content.title} <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-blue-400">
-                {content.highlight}
-              </span>
-            </h2>
-            <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              {content.desc}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {content.features.map((feat, idx) => (
-                <div key={idx} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col items-center lg:items-start gap-3 hover:bg-white/10 transition-colors">
-                  <feat.icon className="w-6 h-6 text-brand-400" />
-                  <span className="font-semibold text-sm">{feat.label}</span>
-                </div>
-              ))}
-            </div>
+          {/* Interaction Hint Overlay */}
+          <div className={`absolute top-10 left-0 right-0 text-center transition-opacity duration-500 ${expansion > 0.1 ? 'opacity-0' : 'opacity-100'}`}>
+             <div className="inline-flex items-center gap-2 bg-brand-500/10 text-brand-400 px-4 py-2 rounded-full border border-brand-500/20 text-sm font-bold animate-bounce">
+                <ScanLine className="w-4 h-4" />
+                Drag slider to Deconstruct
+             </div>
           </div>
 
-          {/* 3D Visual Side */}
-          <div className="flex-1 w-full flex justify-center perspective-[1200px] h-[500px] items-center">
+          {/* The Stack Container */}
+          <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px]" style={{ transformStyle: 'preserve-3d', transform: 'rotateX(60deg) rotateZ(-45deg)' }}>
+            
+            {/* 1. BLUEPRINT (Bottom) */}
+            <IsoLayer 
+              index={0} 
+              expansion={springExpansion} 
+              baseZ={0} 
+              content={layers[3]} 
+              isActive={activeLayer === 0}
+            />
+
+            {/* 2. STRUCTURE */}
+            <IsoLayer 
+              index={1} 
+              expansion={springExpansion} 
+              baseZ={50} 
+              content={layers[2]} 
+              isActive={activeLayer === 1}
+            />
+
+            {/* 3. SYSTEMS */}
+            <IsoLayer 
+              index={2} 
+              expansion={springExpansion} 
+              baseZ={100} 
+              content={layers[1]} 
+              isActive={activeLayer === 2}
+            />
+
+            {/* 4. FINISH (Top) */}
+            <IsoLayer 
+              index={3} 
+              expansion={springExpansion} 
+              baseZ={150} 
+              content={layers[0]} 
+              isActive={activeLayer === 3}
+              isTop
+            />
+            
+            {/* Central Axis Line */}
             <motion.div 
-              style={{ rotateX, scale }}
-              className="relative w-[320px] h-[320px] md:w-[400px] md:h-[400px]"
-            >
-              {/* Layer 1: Terrain / Map */}
-              <motion.div 
-                style={{ translateY: 0 }} // Base layer stays
-                className="absolute inset-0 bg-slate-800/80 border border-slate-600 rounded-2xl shadow-2xl transform-style-3d flex items-center justify-center overflow-hidden"
-              >
-                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=800&auto=format&fit=crop')] bg-cover opacity-30 grayscale"></div>
-                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-                 <div className="text-slate-500 text-xs font-mono absolute bottom-4 left-4 flex items-center gap-2">
-                    <Map className="w-3 h-3" /> Terrain Layer
-                 </div>
-              </motion.div>
+               style={{ height: useTransform(springExpansion, [0, 1], [0, 400]) }}
+               className="absolute left-1/2 top-1/2 w-0.5 bg-brand-500/50 -translate-x-1/2 -translate-y-1/2 origin-bottom" 
+            />
 
-              {/* Layer 2: Foundation / Blueprints */}
-              <motion.div 
-                style={{ translateZ: layerSpacing }}
-                className="absolute inset-0 bg-blue-900/20 border border-blue-500/30 rounded-2xl shadow-xl backdrop-blur-sm flex items-center justify-center transform-style-3d"
-              >
-                 {/* Blueprint grid lines */}
-                 <div className="w-[80%] h-[80%] border-2 border-dashed border-blue-400/40 grid grid-cols-2 grid-rows-2">
-                    <div className="border-r border-b border-blue-400/20"></div>
-                    <div className="border-b border-blue-400/20"></div>
-                    <div className="border-r border-blue-400/20"></div>
-                 </div>
-                 <div className="text-blue-400 text-xs font-mono absolute bottom-4 left-4 flex items-center gap-2">
-                    <Layers className="w-3 h-3" /> Structural Grid
-                 </div>
-              </motion.div>
-
-              {/* Layer 3: 3D Model / Finish */}
-              <motion.div 
-                 style={{ translateZ: useTransform(layerSpacing, (l: any) => l * 2) }}
-                 className="absolute inset-0 bg-brand-900/10 border border-brand-500/50 rounded-2xl shadow-[0_0_50px_rgba(16,185,129,0.2)] backdrop-blur-md flex items-center justify-center transform-style-3d"
-              >
-                 <div className="w-32 h-32 border-4 border-brand-400 bg-brand-500/20 transform rotate-45 shadow-2xl"></div>
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-brand-300/30 rounded-full animate-pulse"></div>
-                 
-                 <div className="text-brand-400 text-xs font-mono absolute bottom-4 left-4 flex items-center gap-2">
-                    <Box className="w-3 h-3" /> Digital Twin
-                 </div>
-
-                 {/* Floating Labels */}
-                 <motion.div 
-                    animate={{ y: [0, -10, 0] }} 
-                    transition={{ duration: 3, repeat: Infinity }}
-                    className="absolute -top-8 -right-8 bg-white text-slate-900 text-xs font-bold px-3 py-1.5 rounded shadow-lg"
-                 >
-                    Living Room
-                 </motion.div>
-              </motion.div>
-
-              {/* Connectors */}
-              <motion.div style={{ opacity: useTransform(layerSpacing, [0, 80], [0, 0.5]) }} className="absolute inset-0 border-l border-r border-dashed border-white/20"></motion.div>
-
-            </motion.div>
           </div>
+
+          {/* Vertical Slider Control */}
+          <div className="absolute right-0 md:-right-12 top-1/2 -translate-y-1/2 h-64 flex flex-col items-center gap-4 z-50">
+             <div className="h-full bg-slate-800 rounded-full w-2 relative">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="1" 
+                  step="0.01"
+                  value={expansion}
+                  onChange={handleSlide}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize z-20"
+                />
+                <motion.div 
+                  className="w-8 h-8 bg-brand-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] absolute left-1/2 -translate-x-1/2 flex items-center justify-center border-2 border-white cursor-grab active:cursor-grabbing"
+                  style={{ bottom: `${expansion * 100}%` }}
+                >
+                   <Layers className="w-4 h-4 text-white" />
+                </motion.div>
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-500 to-slate-700 rounded-full w-full" style={{ height: `${expansion * 100}%`, bottom: 0, top: 'auto' }}></div>
+             </div>
+             <span className="text-xs font-mono text-slate-500 rotate-90 whitespace-nowrap tracking-widest mt-8">EXPLODE LAYERS</span>
+          </div>
+
         </div>
+
+        {/* RIGHT: Intelligence Panel */}
+        <div className="relative">
+           <div className="mb-12">
+             <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-4">
+               Total Visibility. <br />
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-blue-500">
+                 Layer by Layer.
+               </span>
+             </h2>
+             <p className="text-slate-400 text-lg">
+               Structura doesn't just manage tasks. It understands the physics of your construction site, from the hidden pipes to the final paint.
+             </p>
+           </div>
+
+           {/* Dynamic Data Cards */}
+           <div className="space-y-4">
+             {layers.map((layer, idx) => {
+                const isSelected = activeLayer === (3 - idx); // Reversing index to match visual stack order if needed, or mapping by ID. 
+                // Let's map directly: Top of stack (Finish) is idx 0 in layers array.
+                // activeLayer 3 = Finish (Top of visual stack).
+                // layers[0] is Finish.
+                
+                const isCurrent = (3 - activeLayer) === idx;
+
+                return (
+                  <motion.div 
+                    key={layer.id}
+                    initial={false}
+                    animate={{ 
+                       scale: isCurrent ? 1.02 : 1,
+                       opacity: isCurrent ? 1 : 0.4,
+                       x: isCurrent ? 20 : 0
+                    }}
+                    className={`p-6 rounded-2xl border transition-all duration-300 ${isCurrent ? 'bg-slate-800 border-brand-500/50 shadow-2xl' : 'bg-slate-900/50 border-slate-800'}`}
+                  >
+                    <div className="flex items-start gap-4">
+                       <div className={`w-12 h-12 rounded-xl ${layer.color} flex items-center justify-center text-white shadow-lg shrink-0`}>
+                          <layer.icon className="w-6 h-6" />
+                       </div>
+                       <div className="flex-1">
+                          <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                            {layer.title}
+                            {isCurrent && <span className="text-[10px] bg-brand-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">Live</span>}
+                          </h3>
+                          <p className="text-slate-400 text-sm mb-4">{layer.subtitle}</p>
+                          
+                          {/* Data Points Grid */}
+                          <motion.div 
+                            initial={false}
+                            animate={{ height: isCurrent ? 'auto' : 0, opacity: isCurrent ? 1 : 0 }}
+                            className="overflow-hidden grid grid-cols-2 gap-2"
+                          >
+                             {layer.data.map((item, i) => (
+                                <div key={i} className="bg-slate-900/50 rounded p-2 border border-slate-700/50 text-xs font-mono text-brand-300 flex items-center gap-2">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-brand-500"></div>
+                                   {item}
+                                </div>
+                             ))}
+                          </motion.div>
+                       </div>
+                    </div>
+                  </motion.div>
+                )
+             })}
+           </div>
+        </div>
+
       </div>
     </section>
   );
 };
+
+// Sub-component for individual Isometric Layers
+const IsoLayer = ({ index, expansion, baseZ, content, isActive, isTop = false }: any) => {
+  // Calculate dynamic Z translation based on expansion
+  // Max separation is 100px per layer roughly
+  const z = useTransform(expansion, [0, 1], [0, index * 120]);
+  const y = useTransform(expansion, [0, 1], [0, -index * 40]); // Optional Y lift for better view
+  
+  // Opacity logic: if activeLayer is above me, I might be hidden? No, "Exploded view" shows all.
+  // We just highlight the active one.
+  
+  return (
+    <motion.div
+      style={{ 
+         z: baseZ, // Base stacking order
+         translateZ: z, // Dynamic lift
+         translateY: y,
+      }}
+      className={`absolute inset-0 shadow-xl transition-all duration-500 ${isActive ? 'brightness-110' : 'brightness-50 grayscale-[0.5]'}`}
+    >
+       {/* The "Floor Plate" */}
+       <div className={`w-full h-full relative ${isActive ? 'border-2 border-brand-500 shadow-[0_0_30px_rgba(16,185,129,0.3)]' : 'border border-slate-600'}`}>
+          
+          {/* Content Texture/Image */}
+          {content.image ? (
+            <img 
+               src={content.image} 
+               alt={content.title} 
+               className="w-full h-full object-cover" 
+            />
+          ) : (
+            <div 
+               className="w-full h-full bg-slate-800"
+               style={{ background: content.texture || '#1e293b', backgroundSize: '40px 40px' }}
+            ></div>
+          )}
+
+          {/* Overlay Color Tint */}
+          <div className={`absolute inset-0 ${content.color} mix-blend-overlay opacity-20`}></div>
+
+          {/* Side Walls (Thicknes simulation) */}
+          <div className="absolute -right-[10px] top-0 w-[10px] h-full bg-slate-900 origin-left skew-y-[45deg] brightness-50 border-r border-slate-700"></div>
+          <div className="absolute bottom-[-10px] left-0 w-full h-[10px] bg-slate-800 origin-top skew-x-[45deg] brightness-75 border-b border-slate-700"></div>
+
+          {/* Label Floating Above (Always faces camera roughly) */}
+          <motion.div 
+            style={{ opacity: useTransform(expansion, [0, 0.2], [0, 1]) }}
+            className={`absolute -left-10 bottom-10 transform -rotate-z-[-45deg] -rotate-x-[-60deg] pointer-events-none ${isActive ? 'block' : 'hidden'}`}
+          >
+             <div className="bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded border border-brand-500 shadow-lg whitespace-nowrap flex items-center gap-2">
+                {content.title}
+                <ChevronRight className="w-3 h-3 text-brand-500" />
+             </div>
+             <div className="w-12 h-px bg-brand-500 absolute top-1/2 -right-12"></div>
+             <div className="w-2 h-2 rounded-full bg-brand-500 absolute top-1/2 -right-12 -translate-y-1/2"></div>
+          </motion.div>
+
+       </div>
+    </motion.div>
+  )
+}
 
 export default ThreeDShowcase;
